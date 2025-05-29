@@ -76,14 +76,14 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
     const [jsonData, setJsonData] = useState(JSON.stringify(editableData, null, 2));
     const [error, setError] = useState('');
     const [lastValidJson, setLastValidJson] = useState(jsonData);
-    
+
     const textareaRef = useRef(null);
 
     useEffect(() => {
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-      }
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
     }, [jsonData]);
 
     useEffect(() => {
@@ -117,7 +117,7 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
 
     if (data.viewMode === 'data') {
         return (
-            <div style={{ border: '1px solid #ccc', background: nodeTypeColors[data.type]+'aa' || '#888', width: 400, height: 300, position: 'relative' }}>
+            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: 300, position: 'relative' }}>
                 <textarea
                     value={jsonData}
                     onChange={handleJsonChange}
@@ -128,6 +128,7 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
                         fontSize: '12px',
                         textAlign: 'left',
                         border: '1px solid #ddd',
+                        backgroundColor: nodeTypeColors[data.type] + 'aa',
                         borderRadius: '5px',
                         padding: '5px',
                     }}
@@ -203,7 +204,7 @@ const DecisionPointNode = ({ data, color, defaultLabel }) => (
 );
 
 const SingleRouteNode = (props) => (
-    <DecisionPointNode {...props} color={nodeTypeColors['sRoute'] + '70' }defaultLabel="SROUTE" />
+    <DecisionPointNode {...props} color={nodeTypeColors['sRoute'] + '70'} defaultLabel="SROUTE" />
 );
 
 const ParallelRouteNode = (props) => (
