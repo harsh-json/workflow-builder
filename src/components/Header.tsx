@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { global_variables } from '../utils/config';
+import { config } from '../utils/config';
 
 const Header = ({
     title = "Workflow Designer",
@@ -34,15 +34,6 @@ const Header = ({
         }
     };
 
-    // Copy JSON as plain text
-    const handleCopy = (optionKey) => {
-        const obj = global_variables.case_management[optionKey];
-        if (obj) {
-            const text = JSON.stringify(obj, null, 2);
-            navigator.clipboard.writeText(text);
-        }
-        setShowCopyDropdown(false);
-    };
 
     return (
         <header className="w-full backdrop-blur-sm h-14 flex items-center justify-between border-b border-gray-200 px-6 sticky top-0 z-50">
@@ -77,7 +68,7 @@ const Header = ({
                     {showCopyDropdown && (
                         <div className="absolute -right-[75%] mt-2 w-48 bg-white border rounded shadow-lg z-50">
                             {[
-                                { key: 'case_management', label: 'Case Management' },
+                                { key: 'global_variables', label: 'Process Variables' },
                                 { key: 'missing_info', label: 'Missing Info' },
                                 { key: 't_missing_info', label: 'T Missing Info' }
                             ].map(({ key, label }) => (
@@ -85,7 +76,8 @@ const Header = ({
                                     key={key}
                                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-left"
                                     onClick={() => {
-                                        const obj = global_variables[key];
+                                        const obj = config[key];
+                                        console.log('Copying config:', obj);
                                         if (obj) {
                                             const text = JSON.stringify(obj, null, 2);
                                             navigator.clipboard.writeText(text);
