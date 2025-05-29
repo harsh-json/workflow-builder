@@ -117,7 +117,7 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
 
     if (data.viewMode === 'data') {
         return (
-            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: 500, position: 'relative' }}>
+            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: data.type == 'userTask' ? 800 : data.type == 'serviceTask' ? 600 : data.type == 'start' || data.type == 'end' ? 200 : 400, position: 'relative' }}>
                 <img className='absolute top-3 right-3 h-3 opacity-80 cursor-pointer aspect-square' src='https://cdn-icons-png.flaticon.com/128/2976/2976286.png' title='close' onClick={e => {
                     e.stopPropagation();
                     if (typeof onUpdate === 'function') {

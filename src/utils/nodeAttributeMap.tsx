@@ -276,3 +276,4 @@ export function serializeWorkflow(nodes, edges) {
 
   return result;
 }
+

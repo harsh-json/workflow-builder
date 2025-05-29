@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import { stepsJsonToFlow } from './utils/stepsJsonToFlow';
 import WorkflowSidebar from './components/WorkflowSidebar';
 import { serviceTaskTemplates } from './utils/serviceTaskTemplates';
 import { userTaskTemplates } from './utils/userTaskTemplates';
@@ -157,6 +158,7 @@ export default function App() {
 
   const toggleAllNodesViewMode = () => {
     // Check if all nodes are in 'data' mode
+    setViewMode((prev) => (prev === 'flowchart' ? 'data' : 'flowchart'));
     const allInData = nodes.every((n) => n.data.viewMode === 'data');
     setNodes((nds) =>
       nds.map((n) => ({
@@ -184,7 +186,7 @@ export default function App() {
     const attributes = nodeAttributeMap[type];
     const x = positionOverride?.x ?? (window.innerWidth / 2 - 200 + window.scrollX);
     const y = positionOverride?.y ?? (window.innerHeight / 2 - 100 + window.scrollY);
-  
+
     let data = {
       next: [],
       ...Object.fromEntries(attributes.required.map((key) => [key, null])),
@@ -193,7 +195,7 @@ export default function App() {
       stepId: id,
       type,
     };
-  
+
     if (template) {
       data = {
         ...data,
@@ -209,7 +211,7 @@ export default function App() {
         type,
       };
     }
-  
+
     setNodes((nds) => [
       ...nds,
       {
@@ -227,7 +229,15 @@ export default function App() {
       <Header
         title="Workflow Builder"
         onExport={handleExport}
+        viewMode={viewMode}
         onToggleView={toggleAllNodesViewMode}
+        onImportJson={(json) => {
+          // Accepts either {steps: {...}} or just steps object
+          const steps = json.steps || json;
+          const { nodes, edges } = stepsJsonToFlow(steps);
+          setNodes(nodes);
+          setEdges(edges);
+        }}
       />
       <div className="flex h-screen w-screen">
         <WorkflowSidebar

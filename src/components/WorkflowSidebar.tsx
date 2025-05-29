@@ -111,8 +111,8 @@ export default function WorkflowSidebar({ onAddNode }: SidebarProps) {
                 <div
                   style={{
                     position: "absolute",
-                    left: "120%",
-                    top: "-100%",
+                    left: "110%",
+                    top: "-20%",
                     zIndex: 100,
                     background: "#fff",
                     border: "1px solid #ddd",
