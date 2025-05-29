@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "postinstall": "lightningcss install",
+    "postinstall": "npx lightningcss install",
     "preview": "vite preview"
   },
   "dependencies": {
