@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import {
   ReactFlow,
@@ -8,14 +8,28 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import WorkflowSidebar from './components/WorkflowSidebar';
-import { serializeWorkflow } from './utils/nodeAttributeMap';
+import { serviceTaskTemplates } from './utils/serviceTaskTemplates';
+import { userTaskTemplates } from './utils/userTaskTemplates';
+import { serializeWorkflow, nodeAttributeMap } from './utils/nodeAttributeMap';
 import { nodeTypes } from './components/CustomNodes';
 
+export function AppWithProvider() {
+  return (
+    <ReactFlowProvider>
+      <App />
+    </ReactFlowProvider>
+  );
+}
+
 export default function App() {
+
+  const reactFlowInstance = useRef(null);
+
   const [nodes, setNodes, onNodesChange] = useNodesState(() => {
     const saved = localStorage.getItem('workflow_nodes');
     return saved && saved[0] === '[' ? JSON.parse(saved) : [];
@@ -35,13 +49,29 @@ export default function App() {
     const handleKeyDown = (e) => {
       const tag = document.activeElement.tagName.toLowerCase();
       if ((e.key === 'Delete' || e.key === 'Backspace') && tag !== 'input' && tag !== 'textarea') {
-        setNodes((nds) => nds.filter((node) => !node.selected));
-        setEdges((eds) => eds.filter((edge) => !edge.selected));
+        // 1) grab all the node IDs that are selected right now
+        const selectedNodeIds = nodes
+          .filter((n) => n.selected)
+          .map((n) => n.id)
+
+        // 2) remove the selected nodes
+        setNodes((nds) => nds.filter((n) => !n.selected))
+
+        // 3) remove edges that are either (a) selected, or (b) attached to any of the deleted nodes
+        setEdges((eds) =>
+          eds.filter(
+            (e) =>
+              !e.selected &&
+              !selectedNodeIds.includes(e.source) &&
+              !selectedNodeIds.includes(e.target)
+          )
+        )
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setNodes, setEdges]);
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [nodes, setNodes, edges, setEdges])
 
   useEffect(() => {
     localStorage.setItem('workflow_nodes', JSON.stringify(nodes));
@@ -125,20 +155,118 @@ export default function App() {
     );
   };
 
+  const toggleAllNodesViewMode = () => {
+    // Check if all nodes are in 'data' mode
+    const allInData = nodes.every((n) => n.data.viewMode === 'data');
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          viewMode: allInData ? 'flowchart' : 'data',
+        },
+      }))
+    );
+  };
+
+  // When rendering, pass onUpdate and viewMode per node
+  const nodesWithHandlers = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      viewMode: node.data.viewMode || 'flowchart',
+      onUpdate: (updatedData) => handleNodeUpdate(node.id, updatedData),
+    },
+  }));
+
+  const handleAddClick = (type, positionOverride, template) => {
+    const id = `node_${Date.now()}`;
+    const attributes = nodeAttributeMap[type];
+    const x = positionOverride?.x ?? (window.innerWidth / 2 - 200 + window.scrollX);
+    const y = positionOverride?.y ?? (window.innerHeight / 2 - 100 + window.scrollY);
+  
+    let data = {
+      next: [],
+      ...Object.fromEntries(attributes.required.map((key) => [key, null])),
+      ...Object.fromEntries(attributes.optional.map((key) => [key, null])),
+      viewMode: 'flowchart',
+      stepId: id,
+      type,
+    };
+  
+    if (template) {
+      data = {
+        ...data,
+        ...template,
+        stepId: id,
+        type,
+      };
+    } else if (type === "userTask") {
+      data = {
+        ...data,
+        ...userTaskTemplates.DEFAULT_USER_TASK,
+        stepId: id,
+        type,
+      };
+    }
+  
+    setNodes((nds) => [
+      ...nds,
+      {
+        id,
+        type,
+        position: { x, y },
+        data,
+      },
+    ]);
+  };
+
 
   return (
     <>
       <Header
         title="Workflow Builder"
         onExport={handleExport}
-        viewMode={viewMode}
-        onToggleView={toggleViewMode}
+        onToggleView={toggleAllNodesViewMode}
       />
       <div className="flex h-screen w-screen">
-        <WorkflowSidebar onAddNode={(node) => setNodes((nds) => [...nds, node])} />
+        <WorkflowSidebar
+          onAddNode={(node) => setNodes((nds) => [...nds, node])}
+          handleAddClick={handleAddClick}
+        />
         <div className="flex-1 relative w-screen h-screen z-40" style={{ minHeight: 0 }}>
           <ReactFlow
-            nodes={nodesWithUpdatedViewMode}
+            onInit={instance => {
+              console.log('ReactFlow instance:', instance);
+              reactFlowInstance.current = instance;
+            }}
+            onDrop={event => {
+              event.preventDefault();
+              const type = event.dataTransfer.getData('application/reactflow');
+              const serviceTaskTemplateKey = event.dataTransfer.getData('serviceTaskTemplate');
+              const userTaskTemplateKey = event.dataTransfer.getData('userTaskTemplate');
+              if (!type || !reactFlowInstance.current) return;
+
+              const position = reactFlowInstance.current.screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+              });
+
+              if (type === 'serviceTask' && serviceTaskTemplateKey) {
+                const template = serviceTaskTemplates[serviceTaskTemplateKey];
+                handleAddClick(type, position, template);
+              } else if (type === 'userTask' && userTaskTemplateKey) {
+                const template = userTaskTemplates[userTaskTemplateKey];
+                handleAddClick(type, position, template);
+              } else {
+                handleAddClick(type, position);
+              }
+            }}
+            onDragOver={event => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+            }}
+            nodes={nodesWithHandlers}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -148,11 +276,11 @@ export default function App() {
           >
             <MiniMap />
             <Controls />
-            <Background variant="dots" gap={12} size={1} /> {/* <-- dots background */}
+            <Background variant="dots" gap={12} size={1} />
           </ReactFlow>
         </div>
       </div>
     </>
-
   );
+
 }

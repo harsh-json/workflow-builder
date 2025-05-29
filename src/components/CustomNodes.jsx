@@ -76,6 +76,15 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
     const [jsonData, setJsonData] = useState(JSON.stringify(editableData, null, 2));
     const [error, setError] = useState('');
     const [lastValidJson, setLastValidJson] = useState(jsonData);
+    
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      }
+    }, [jsonData]);
 
     useEffect(() => {
         setJsonData(JSON.stringify(editableData, null, 2));
@@ -108,7 +117,7 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
 
     if (data.viewMode === 'data') {
         return (
-            <div style={{ border: '1px solid #ccc', background: nodeTypeColors[data.type] + '70' || '#888', width: 400, height: 300, position: 'relative' }}>
+            <div style={{ border: '1px solid #ccc', background: nodeTypeColors[data.type]+'aa' || '#888', width: 400, height: 300, position: 'relative' }}>
                 <textarea
                     value={jsonData}
                     onChange={handleJsonChange}

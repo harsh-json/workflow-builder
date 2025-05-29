@@ -251,7 +251,7 @@ export function serializeWorkflow(nodes, edges) {
     // For route nodes, build options array
     if (['cpRoute', 'pRoute', 'sRoute'].includes(type)) {
       exportData.options = (outgoingEdges[id] || []).map(edge => ({
-        condition: 'true', // default, you can enhance this
+        condition: '${true}', // default, you can enhance this
         next: edge.target,
       }));
       // Remove next if present
