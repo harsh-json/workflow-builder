@@ -1,8 +1,8 @@
 {
   "name": "workflow-poc",
   "engines": {
-  "node": "18.x"
-},
+    "node": "18.x"
+  },
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "postinstall": "lightningcss install",
     "preview": "vite preview"
   },
   "dependencies": {
