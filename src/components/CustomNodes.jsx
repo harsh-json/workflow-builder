@@ -117,10 +117,17 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
 
     if (data.viewMode === 'data') {
         return (
-            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: 300, position: 'relative' }}>
+            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: 500, position: 'relative' }}>
+                <img className='absolute top-3 right-3 h-3 opacity-80 cursor-pointer aspect-square' src='https://cdn-icons-png.flaticon.com/128/2976/2976286.png' title='close' onClick={e => {
+                    e.stopPropagation();
+                    if (typeof onUpdate === 'function') {
+                        onUpdate({ ...data, viewMode: 'flowchart' });
+                    }
+                }} />
                 <textarea
                     value={jsonData}
                     onChange={handleJsonChange}
+                    onDoubleClick={e => e.stopPropagation()} // Prevents toggling view mode
                     onBlur={handleBlur}
                     style={{
                         width: '100%',
