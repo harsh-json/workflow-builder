@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Handle } from '@xyflow/react';
 import { nodeTypeColors } from '../utils/nodeAttributeMap';
+import Editor from "@monaco-editor/react";
 
 const nodeStyle = {
     padding: '10px',
@@ -92,6 +93,17 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
         setError('');
     }, [data.viewMode, data.stepId]); // also reset if node changes
 
+    const handleEditorChange = (value) => {
+        setJsonData(value);
+        try {
+            JSON.parse(value);
+            setError('');
+            setLastValidJson(value);
+        } catch (err) {
+            setError('Invalid JSON format: ' + err.message);
+        }
+    };
+
     const handleJsonChange = (e) => {
         const newText = e.target.value;
         setJsonData(newText);
@@ -117,31 +129,59 @@ const NodeWrapper = ({ data, children, onUpdate }) => {
 
     if (data.viewMode === 'data') {
         return (
-            <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: data.type == 'userTask' ? 800 : data.type == 'serviceTask' ? 600 : data.type == 'start' || data.type == 'end' ? 200 : 400, position: 'relative' }}>
-                <img className='absolute top-3 right-3 h-3 opacity-80 cursor-pointer aspect-square' src='https://cdn-icons-png.flaticon.com/128/2976/2976286.png' title='close' onClick={e => {
+            <div
+                onDoubleClick={e => e.stopPropagation()}
+                onDrag={e => e.stopPropagation()}
+                style={{ border: '1px solid #ccc', background: nodeTypeColors[data.type] + '20' || '#fff', width: 400, height: data.type == 'userTask' ? 800 : data.type == 'serviceTask' ? 600 : data.type == 'start' || data.type == 'end' ? 200 : 400, position: 'relative' }}>
+                <img className='absolute top-3 z-40 right-3 h-3 opacity-80 cursor-pointer aspect-square' src='https://cdn-icons-png.flaticon.com/128/2976/2976286.png' title='close' onClick={e => {
                     e.stopPropagation();
+                    const parsedData = JSON.parse(jsonData);
                     if (typeof onUpdate === 'function') {
-                        onUpdate({ ...data, viewMode: 'flowchart' });
+                        onUpdate({ ...data, ...parsedData, viewMode: 'flowchart' });
                     }
                 }} />
-                <textarea
+                <Editor
+                    height="100%"
+                    defaultLanguage="json"
                     value={jsonData}
-                    onChange={handleJsonChange}
-                    onDoubleClick={e => e.stopPropagation()} // Prevents toggling view mode
+                    onChange={handleEditorChange}
                     onBlur={handleBlur}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        fontSize: '12px',
-                        textAlign: 'left',
-                        border: '1px solid #ddd',
-                        backgroundColor: nodeTypeColors[data.type] + 'aa',
-                        borderRadius: '5px',
-                        padding: '5px',
+                    options={{
+                        minimap: { enabled: false },
+                        fontSize: 12,
+                        scrollBeyondLastLine: false,
+                        wordWrap: "on",
+                        formatOnPaste: true,
+                        formatOnType: true,
                     }}
                 />
                 {error && <div style={{ color: 'red', marginTop: '5px' }}>{error}</div>}
             </div>
+            // <div style={{ border: '1px solid #ccc', background: 'white' || '#888', width: 400, height: data.type == 'userTask' ? 800 : data.type == 'serviceTask' ? 600 : data.type == 'start' || data.type == 'end' ? 200 : 400, position: 'relative' }}>
+            //     <img className='absolute top-3 right-3 h-3 opacity-80 cursor-pointer aspect-square' src='https://cdn-icons-png.flaticon.com/128/2976/2976286.png' title='close' onClick={e => {
+            //         e.stopPropagation();
+            //         if (typeof onUpdate === 'function') {
+            //             onUpdate({ ...data, viewMode: 'flowchart' });
+            //         }
+            //     }} />
+            //     <textarea
+            //         value={jsonData}
+            //         onChange={handleJsonChange}
+            //         onDoubleClick={e => e.stopPropagation()} // Prevents toggling view mode
+            //         onBlur={handleBlur}
+            //         style={{
+            //             width: '100%',
+            //             height: '100%',
+            //             fontSize: '12px',
+            //             textAlign: 'left',
+            //             border: '1px solid #ddd',
+            //             backgroundColor: nodeTypeColors[data.type] + 'aa',
+            //             borderRadius: '5px',
+            //             padding: '5px',
+            //         }}
+            //     />
+            //     {error && <div style={{ color: 'red', marginTop: '5px' }}>{error}</div>}
+            // </div>
         );
     }
     return children;
