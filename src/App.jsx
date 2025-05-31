@@ -11,6 +11,7 @@ import {
   useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import EditableEdge from './components/EditableEdge';
 
 import { stepsJsonToFlow } from './utils/stepsJsonToFlow';
 import WorkflowSidebar from './components/WorkflowSidebar';
@@ -31,6 +32,13 @@ export default function App() {
 
   const reactFlowInstance = useRef(null);
 
+const edgeTypes = {
+  editable: (edgeProps) => (
+    <EditableEdge {...edgeProps} setEdges={setEdges} nodes={nodes} />
+  ),
+};
+
+
   const [nodes, setNodes, onNodesChange] = useNodesState(() => {
     const saved = localStorage.getItem('workflow_nodes');
     return saved && saved[0] === '[' ? JSON.parse(saved) : [];
@@ -42,7 +50,8 @@ export default function App() {
   const [viewMode, setViewMode] = useState('flowchart'); // State for global view mode
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdges((eds) =>
+      addEdge({ ...params, type: 'editable' }, eds)),
     [setEdges]
   );
 
@@ -223,6 +232,18 @@ export default function App() {
     ]);
   };
 
+  const onEdgeDoubleClick = (event, edge) => {
+    event.stopPropagation();
+    const newLabel = prompt('Enter condition/label for this edge:', edge.label || '');
+    if (newLabel !== null) {
+      setEdges((eds) =>
+        eds.map((e) =>
+          e.id === edge.id ? { ...e, label: newLabel } : e
+        )
+      );
+    }
+  };
+
 
   return (
     <>
@@ -246,10 +267,12 @@ export default function App() {
         />
         <div className="flex-1 relative w-screen h-screen z-40" style={{ minHeight: 0 }}>
           <ReactFlow
+            edgeTypes={edgeTypes}
             onInit={instance => {
               console.log('ReactFlow instance:', instance);
               reactFlowInstance.current = instance;
             }}
+            // onEdgeDoubleClick={onEdgeDoubleClick}
             onDrop={event => {
               event.preventDefault();
               const type = event.dataTransfer.getData('application/reactflow');

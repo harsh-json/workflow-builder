@@ -49,7 +49,11 @@ export function stepsJsonToFlow(steps, startX = 100, startY = 100, parentId = nu
               id: `${stepId}->${opt.next}`,
               source: stepId,
               target: opt.next,
-              label: opt.condition || undefined,
+              label: opt.condition
+              ? opt.condition.startsWith('${') && opt.condition.endsWith('}')
+                ? opt.condition.slice(2, -1)
+                : opt.condition
+              : undefined,
             });
             processStep(opt.next, { x: pos.x + 200, y: pos.y + idx * 100 }, parent, depth + 1);
           }
